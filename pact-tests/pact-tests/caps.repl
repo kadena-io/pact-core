@@ -46,6 +46,18 @@
   (defun enforce-msg-keyset (key:string)
     (enforce-keyset (read-keyset key)))
 
+  (defun create-read-only-db-user-guard ()
+    @doc "Creates a user guard which tries to read from the DB, which is not allowed. This will fail when the guard is enforced."
+    ; this insert succeeds:
+    (insert ints 'y {'i: 0})
+    (create-user-guard (read-only-user-guard-fun 'y)))
+
+  (defun read-only-user-guard-fun (x:string)
+    (let ((row (read ints x)))
+      (enforce (= 0 (at 'i row)) "int wasn't zero")
+      ))
+
+
   (defun create-bad-db-user-guard ()
     @doc "Creates a user guard which tries to read from the DB, which is not allowed. This will fail when the guard is enforced."
     ; this insert succeeds:
@@ -54,7 +66,9 @@
 
   (defun bad-user-guard-fun (x:string)
     (let ((row (read ints x)))
-      (enforce (= 0 (at 'i row)) "int wasn't zero")))
+      (enforce (= 0 (at 'i row)) "int wasn't zero")
+      (write ints x {"i":(+ (at "i" row) 1)})
+      ))
 
   (defpact test-pact-guards (id:string)
     (step (step1 id))
@@ -196,7 +210,14 @@
                 (enforce-guard (keyset-ref-guard "k2")))
 
 (let ((bad-db-user-guard (create-bad-db-user-guard)))
-  (expect-failure "reading db from within user guard" (enforce-guard bad-db-user-guard)))
+  (expect-failure "writing to db from within user guard" (enforce-guard bad-db-user-guard)))
+
+(let ((read-only-user-guard (create-read-only-db-user-guard)))
+  (expect "User guard works successfully in read-only mode" true (enforce-guard read-only-user-guard)))
+
+; The previous test wrote to 'y, so we can just reuse that
+(let ((read-only-user-guard (create-user-guard (read-only-user-guard-fun "y"))))
+  (expect "Read-only works successfully in enforce" true (enforce (enforce-guard read-only-user-guard) "enforce works")))
 
 (env-hash (hash "pact-guards-a-id")) ;; equivalent of pact-id
 (test-pact-guards "a")
@@ -993,7 +1014,7 @@
    )
 
    (defun emit-a(a:integer) (emit-event (A_EVENT a a))))
-   
+
 
 (use B)
 (call-a)

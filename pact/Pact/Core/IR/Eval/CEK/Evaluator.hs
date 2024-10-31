@@ -225,7 +225,7 @@ evaluateTerm cont handler env (BuiltinForm c info) = case c of
     -- chargeGasArgs info (GAConstant constantWorkNodeGas)
     evalCEK (CondC env info (IfC e1 e2) cont) handler env cond
   CEnforce cond str -> do
-    let env' = sysOnlyEnv env
+    let env' = readOnlyEnv env
     -- chargeGasArgs info (GAConstant constantWorkNodeGas)
     evalCEK (CondC env' info (EnforceC str) cont) handler env' cond
   -- | ------ From --------------- | ------ To ------------------------ |
@@ -1558,7 +1558,7 @@ runUserGuard info cont handler env (UserGuard qn args) =
   getModuleMemberWithHash info qn >>= \case
     (Dfun d, mh) -> do
       when (length (_dfunArgs d) /= length args) $ throwExecutionError info CannotApplyPartialClosure
-      let env' = sysOnlyEnv env
+      let env' = readOnlyEnv env
       clo <- mkDefunClosure d (qualNameToFqn qn mh) env'
       -- Todo: sys only here
       applyLam (C clo) (VPactValue <$> args) (IgnoreValueC (PBool True) cont) handler
