@@ -1,0 +1,26 @@
+(module read-only-test g
+  (defcap g () true)
+
+  (defschema sc a:integer b:string)
+  (deftable tbl:{sc})
+
+  (defcap ENFORCE_ME (a:integer) true)
+
+  (defun write-entry (k:string a:integer b:string)
+    (write tbl k {"a":a, "b":b})
+  )
+
+  (defun read-entry (k:string)
+    (read tbl k)
+  )
+
+  (defun write-then-read (k:string a:integer b:string)
+    (write-entry k a b)
+    (read-entry k)
+  ))
+
+(create-table tbl)
+
+(expect "Writes and reads work" {"a":1, "b":"v"} (write-then-read "k" 1 "v") )
+(expect-failure "Writes do not work in read-only mode" (run-read-only (write-then-read "k" 1 "v")))
+(expect "Only reads work in read-only mode" {"a":1, "b":"v"} (run-read-only (read-entry "k")))

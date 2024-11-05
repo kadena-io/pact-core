@@ -372,6 +372,8 @@ instance (Serialise (SerialiseV1 b), Serialise (SerialiseV1 i))
         encodeListLen 3 <> encodeWord 6 <> encodeS t1 <> encodeS t2
       CCreateUserGuard t1 ->
         encodeListLen 2 <> encodeWord 7 <> encodeS t1
+      CRunReadOnly t1 ->
+        encodeListLen 2 <> encodeWord 8 <> encodeS t1
   {-# INLINE encode #-}
 
   decode = do
@@ -385,6 +387,7 @@ instance (Serialise (SerialiseV1 b), Serialise (SerialiseV1 i))
       5 -> CWithCapability <$> decodeS <*> decodeS
       6 -> CTry <$> decodeS <*> decodeS
       7 -> CCreateUserGuard <$> decodeS
+      8 -> CRunReadOnly <$> decodeS
       _ -> fail "unexpected decoding"
   {-# INLINE decode #-}
 

@@ -260,6 +260,7 @@ data SpecialForm
   | SFTry
   | SFMap
   | SFCond
+  | SFRunReadOnly
   | SFCreateUserGuard
   deriving (Eq, Show, Enum, Bounded)
 
@@ -274,6 +275,7 @@ toSpecialForm = \case
   "enforce-one" -> Just SFEnforceOne
   "try" -> Just SFTry
   "map" -> Just SFMap
+  "run-read-only" -> Just SFRunReadOnly
   "do" -> Just SFDo
   "cond" -> Just SFCond
   "create-user-guard" -> Just SFCreateUserGuard
@@ -363,6 +365,9 @@ desugarSpecial (bn@(BareName t), varInfo) dsArgs appInfo = case toSpecialForm t 
       [e] -> BuiltinForm <$> (CCreateUserGuard <$> desugarLispTerm e) <*> pure appInfo
       _ -> throwDesugarError (InvalidSyntax "create-user-guard must take one argument, which must be an application") appInfo
     SFMap -> desugar1ArgHOF MapV args
+    SFRunReadOnly -> case args of
+      [e] -> BuiltinForm <$> (CRunReadOnly <$> desugarLispTerm e) <*> pure appInfo
+      _ -> throwDesugarError (InvalidSyntax "run-read-only must take one argument") appInfo
     SFCond -> case reverse args of
       defCase:xs -> do
         defCase' <- desugarLispTerm defCase

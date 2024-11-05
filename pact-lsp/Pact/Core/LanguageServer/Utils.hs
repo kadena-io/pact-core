@@ -34,6 +34,7 @@ termAt p term
           CWithCapability a b -> termAt p a <|> termAt p b
           CTry a b -> termAt p a <|> termAt p b
           CCreateUserGuard a -> termAt p a
+          CRunReadOnly a -> termAt p a
         <|> Just t
       t@(ListLit tms _) -> getAlt (foldMap (Alt . termAt p) tms) <|> Just t
       t@(Nullary tm _) -> termAt p tm <|> Just t

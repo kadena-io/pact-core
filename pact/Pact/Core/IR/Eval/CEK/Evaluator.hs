@@ -249,6 +249,9 @@ evaluateTerm cont handler env (BuiltinForm c info) = case c of
           evalCEK cont' handler env x
     _ -> throwExecutionError info $ NativeExecutionError (NativeName "create-user-guard") $
           "create-user-guard: expected function application of a top-level function"
+  CRunReadOnly term -> do
+    let env' = readOnlyEnv env
+    evalCEK cont handler env' term
   -- | ------ From --------------- | ------ To ------------------------ |
   --   <Try c body, E, K, H>         <body, E, Mt, CEKHandler(E,c,K,_errState,H)>
   --   _errState - callstack,granted caps,events,gas
@@ -314,7 +317,7 @@ mkDefPactClosure
   -> FullyQualifiedName
   -> DefPact Name Type b i
   -> CEKEnv e b i
-  ->CEKValue e b i
+  -> CEKValue e b i
 mkDefPactClosure info fqn dpact env = case _dpArgs dpact of
   [] ->
     let dpc = DefPactClosure fqn NullaryClosure 0 env info
