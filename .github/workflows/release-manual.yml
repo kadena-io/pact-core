@@ -24,6 +24,11 @@ on:
         type: boolean
         required: false
         default: false
+      update_homebrew:
+        description: "Update homebrew references to this release"
+        type: boolean
+        required: false
+        default: false
   workflow_call:
     inputs:
       release_sha:
@@ -45,7 +50,12 @@ on:
         type: boolean
         required: false
         default: true
-
+      update_homebrew:
+        description: "Update homebrew references to this release"
+        type: boolean
+        required: false
+        default: false
+        
 jobs:
   release_vars:
     runs-on: ubuntu-latest
@@ -176,12 +186,20 @@ jobs:
           replacesArtifacts: true
           updateOnlyUnreleased: true
 
-  release_to_brew:
+  release_to_brew_nightly:
+    uses: kadena-io/homebrew-pact/.github/workflows/release-bump.yml@master
+    needs: release_to_github
+    with:
+      pact_arm: "${{ needs.release_to_github.outputs.OSX_RELEASE_URL }}"
+      pact_head: https://github.com/kadena-io/pact-5/releases/download/nightly/pact-nightly-aarch64-osx.tar.gz
+    secrets: inherit
+
+  release_to_brew_published:
+    if: ${{ inputs.update_homebrew }}
     uses: kadena-io/homebrew-pact/.github/workflows/release-bump.yml@master
     needs: release_to_github
     with:
       pact_arm: "${{ needs.release_to_github.outputs.OSX_RELEASE_URL }}"
       pact_head: https://github.com/kadena-io/pact-5/releases/download/nightly/pact-nightly-darwin-aarch64.tar.gz
     secrets: inherit
-              
         
